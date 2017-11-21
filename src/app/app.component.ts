@@ -8,7 +8,7 @@ import timeseries from 'timeseries-analysis';
 })
 export class AppComponent {
 	title = 'app';
-	public data = [10, 12, 16, 14, 13, 11, 10, 9, 11, 23];
+	public data = [100, 120, 16, 14, 13, 11, 10, 9, 11, 23];
 
 	public t = new timeseries.main(timeseries.adapter.fromArray(this.data));
 	chart_url = this.t.ma({ period: 14 }).chart();

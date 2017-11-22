@@ -1,4 +1,5 @@
-import { Component } from '@angular/core';
+import { Component, AfterViewInit } from '@angular/core';
+import Plotly from 'plotly.js/lib/core';
 import timeseries from 'timeseries-analysis';
 
 @Component({
@@ -6,12 +7,109 @@ import timeseries from 'timeseries-analysis';
 	templateUrl: './app.component.html',
 	styleUrls: ['./app.component.css']
 })
-export class AppComponent {
-	title = 'app';
-	public data = [100, 120, 16, 14, 13, 11, 10, 9, 11, 23];
+export class AppComponent implements AfterViewInit {
+	public chart_url: string;
 
-	public t = new timeseries.main(timeseries.adapter.fromArray(this.data));
-	chart_url = this.t.ma({ period: 14 }).chart();
+	constructor() {
+	}
+	public ngAfterViewInit(): void {
+		const amountOfData = 50;
+		const amountOfknownData = 14;
+
+		const data = this.initData(amountOfData);
+		const knownData = data.slice(0, amountOfknownData);
+
+		let slidingRegressionForecast = this.countSlidingRegressionForecast(data);
+		let stepByStepPrediction = this.countStepByStepPrediction(data, knownData);
+
+		this.drawPlot(data.length, amountOfknownData,
+			{ name: 'Data', data: data },
+			// { name: 'Sliding Regression Forecast', data: slidingRegressionForecast },
+			{ name: 'Step By Step Prediction', data: stepByStepPrediction }
+		);
+	}
+
+	initData(length) {
+		// return Array.apply(null, {length: length}).map(Number.call, Number);
+		return Array.apply(null, { length: length }).map(Number.call, Number).map(i => Math.cos(i) * i);
+		// return [2, 1, -35, 1, 23, -45, 23, 45, 2, -45, 1, 43, 12, -4, 45, 56, 23, 35, -35, 2, 15, 8, 4, 23, 7, 5, 76, 4, 34]
+	}
 
 
+	countSlidingRegressionForecast(data) {
+		const t = new timeseries.main(timeseries.adapter.fromArray(data));
+		t.smoother({ period: 1 }).save('smoothed');
+		const bestSettings = t.regression_forecast_optimize();
+		t.sliding_regression_forecast({
+			sample: bestSettings.sample,
+			degree: bestSettings.degree,
+			method: bestSettings.method
+		});
+		return t.data.map(el => el[1]);
+	}
+
+	countStepByStepPrediction(data, knownData) {
+		const array = knownData.slice();
+		for (let i = knownData.length; i < data.length; i++) {
+			let forecastDatapoint = i;
+			let dataTillDatapoint = data.slice(0, forecastDatapoint);
+			const forecast = this.forecastNextValue(dataTillDatapoint)
+			array.push(forecast)
+		}
+		return array;
+	}
+
+	forecastNextValue(data) {
+		const t = new timeseries.main(timeseries.adapter.fromArray(data));
+		const timeseriesData = t.data.slice(0, data.length);
+		const bestSettings = t.regression_forecast_optimize();
+
+		const coeffs = t[bestSettings.method]({
+			data: timeseriesData,
+			sample: bestSettings.sample,
+			degree: bestSettings.degree
+		});
+
+		let forecast = 0;
+		for (let j = 0; j < coeffs.length; j++) {
+			forecast -= t.data[timeseriesData.length - 1 - j][1] * coeffs[j];
+		}
+
+		return forecast;
+	}
+
+	drawPlot(amountOfData,amountOfknownData, ...plots) {
+		var xValues = Array.apply(null, { length: amountOfData }).map(Number.call, Number);
+
+		function plotItem(plot) {
+			return {
+				x: xValues,
+				y: plot.data,
+				mode: 'lines+markers',
+				name: plot.name,
+				line: { shape: 'spline' },
+				type: 'scatter'
+			}
+		}
+		var layout = {
+
+			// to highlight the timestamp we use shapes and create a rectangular
+
+			shapes: [
+				// 1st highlight during Feb 4 - Feb 6
+				{
+            'type': 'line',
+            'x0': amountOfknownData,
+            'y0': -100,
+            'x1': amountOfknownData,
+            'y1': 100,
+            'line': {
+                'color': 'rgb(50, 171, 96)',
+                'width': 3,
+            },
+        },
+			]
+		}
+		Plotly.newPlot('myDiv', plots.map((plot) => plotItem(plot)), layout);
+	}
 }

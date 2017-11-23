@@ -13,25 +13,27 @@ export class AppComponent implements AfterViewInit {
 	constructor() {
 	}
 	public ngAfterViewInit(): void {
-		const amountOfData = 50;
+		const amountOfData = 30;
 		const amountOfknownData = 14;
+		const gap = 5;
+
 
 		const data = this.initData(amountOfData);
 		const knownData = data.slice(0, amountOfknownData);
 
 		let slidingRegressionForecast = this.countSlidingRegressionForecast(data);
-		let stepByStepPrediction = this.countStepByStepPrediction(data, knownData);
+		let stepByStepPrediction = this.countStepByStepPrediction(data, knownData, gap);
 
 		this.drawPlot(data.length, amountOfknownData,
 			{ name: 'Data', data: data },
 			// { name: 'Sliding Regression Forecast', data: slidingRegressionForecast },
-			{ name: 'Step By Step Prediction', data: stepByStepPrediction }
+			{ name: 'Step By Step Prediction', data: stepByStepPrediction, gap: gap }
 		);
 	}
 
 	initData(length) {
-		// return Array.apply(null, {length: length}).map(Number.call, Number);
-		return Array.apply(null, { length: length }).map(Number.call, Number).map(i => Math.cos(i) * i);
+		return Array.apply(null, { length: length }).map(Number.call, Number);
+		// return Array.apply(null, { length: length }).map(Number.call, Number).map(i => Math.cos(i) * i);
 		// return [2, 1, -35, 1, 23, -45, 23, 45, 2, -45, 1, 43, 12, -4, 45, 56, 23, 35, -35, 2, 15, 8, 4, 23, 7, 5, 76, 4, 34]
 	}
 
@@ -48,11 +50,17 @@ export class AppComponent implements AfterViewInit {
 		return t.data.map(el => el[1]);
 	}
 
-	countStepByStepPrediction(data, knownData) {
+	countStepByStepPrediction(data, knownData, gap) {
+		let dataTillDatapoint;
 		const array = knownData.slice();
+
 		for (let i = knownData.length; i < data.length; i++) {
 			let forecastDatapoint = i;
-			let dataTillDatapoint = data.slice(0, forecastDatapoint);
+			if ((i - knownData.length) % gap === 0) {
+				dataTillDatapoint = data.slice(0, forecastDatapoint);
+			} else {
+				dataTillDatapoint = array;
+			}
 			const forecast = this.forecastNextValue(dataTillDatapoint)
 			array.push(forecast)
 		}
@@ -78,12 +86,12 @@ export class AppComponent implements AfterViewInit {
 		return forecast;
 	}
 
-	drawPlot(amountOfData,amountOfknownData, ...plots) {
-		var xValues = Array.apply(null, { length: amountOfData }).map(Number.call, Number);
+	drawPlot(amountOfData, amountOfknownData, ...plots) {
+
 
 		function plotItem(plot) {
 			return {
-				x: xValues,
+				x: initXValues(plot.gap),
 				y: plot.data,
 				mode: 'lines+markers',
 				name: plot.name,
@@ -91,25 +99,32 @@ export class AppComponent implements AfterViewInit {
 				type: 'scatter'
 			}
 		}
+
+		function initXValues(gap = 1) {
+			var xValues = Array.apply(null, { length: amountOfData }).map(Number.call, Number);
+			return xValues.map((el, index) => {
+				if (index <= amountOfknownData || (index - amountOfknownData) % gap === 0) {
+					return el;
+				}
+			}).filter(el => el)
+		}
+
 		var layout = {
-
-			// to highlight the timestamp we use shapes and create a rectangular
-
 			shapes: [
-				// 1st highlight during Feb 4 - Feb 6
 				{
-            'type': 'line',
-            'x0': amountOfknownData,
-            'y0': -100,
-            'x1': amountOfknownData,
-            'y1': 100,
-            'line': {
-                'color': 'rgb(50, 171, 96)',
-                'width': 3,
-            },
-        },
+					'type': 'line',
+					'x0': amountOfknownData,
+					'y0': -100,
+					'x1': amountOfknownData,
+					'y1': 100,
+					'line': {
+						'color': 'rgb(50, 171, 96)',
+						'width': 3,
+					},
+				},
 			]
 		}
-		Plotly.newPlot('myDiv', plots.map((plot) => plotItem(plot)), layout);
+		let pl = plots.map((plot) => plotItem(plot));
+		Plotly.newPlot('myDiv', pl, layout);
 	}
 }

@@ -10,8 +10,7 @@ import { StockDataService } from '../services/stock-data.service';
 })
 
 export class ChartComponent implements AfterViewInit {
-	public chart_url: string;
-	public amountOfTrades: number = 10;
+	public timePeriod: number = 100;
 	public amountOfknownData: number = 14;
 	public gap: number = 1;
 	public stockData: Array<any> = [];
@@ -21,21 +20,20 @@ export class ChartComponent implements AfterViewInit {
 
 
 	public ngAfterViewInit(): void {
-		setTimeout(_ => this.inflate());
-
+		setTimeout(() => this.inflate());
 	}
 
 	inflate() {
 
-		this.stockDataService.requestStocksFromGoogleFinance(this.amountOfTrades).then((data) => {
+		this.stockDataService.requestStocksFromGoogleFinance(this.timePeriod).then((data) => {
 			console.log(data)
-			this.stockData = data.map((el) => el.close);
+			this.stockData = data;
 
 
-			let stepByStepPrediction = this.countStepByStepPrediction(this.stockData, this.stockData.slice(0,14), this.gap);
+			let stepByStepPrediction = this.countStepByStepPrediction(this.stockData, this.amountOfknownData);
 			console.log(stepByStepPrediction)
 			this.drawPlot(
-				{ name: 'Data', data: this.stockData },
+				{ name: 'Data', data: this.stockData.map(el => el.close) },
 				{ name: 'Step By Step Prediction', data: stepByStepPrediction, gap: this.gap }
 			);
 		});
@@ -49,13 +47,6 @@ export class ChartComponent implements AfterViewInit {
 		// );
 	}
 
-
-
-	initData(length) {
-		return this.stockDataService.getStockData();
-	}
-
-
 	countSlidingRegressionForecast(data) {
 		const t = new timeseries.main(timeseries.adapter.fromArray(data));
 		t.smoother({ period: 5 }).save('smoothed');
@@ -68,21 +59,23 @@ export class ChartComponent implements AfterViewInit {
 		return t.data.map(el => el[1]);
 	}
 
-	countStepByStepPrediction(data, knownData, gap) {
+	countStepByStepPrediction(data, amountOfknownData) {
+		const arrayOfStockCloseValue = data.map(el => el.close);
+		const arrayOfKnownStockValues = arrayOfStockCloseValue.slice(0, amountOfknownData);
 		let dataTillDatapoint;
-		const array = knownData.slice();
 
-		for (let i = knownData.length; i < data.length; i++) {
+
+		for (let i = amountOfknownData; i < data.length; i++) {
 			let forecastDatapoint = i;
-			if ((i - knownData.length) % gap === 0) {
-				dataTillDatapoint = data.slice(0, forecastDatapoint);
+			if ((i - amountOfknownData) % this.gap === 0) {
+				dataTillDatapoint = arrayOfStockCloseValue.slice(0, forecastDatapoint);
 			} else {
-				dataTillDatapoint = array;
+				dataTillDatapoint = arrayOfKnownStockValues;
 			}
 			const forecast = this.forecastNextValue(dataTillDatapoint)
-			array.push(forecast)
+			arrayOfKnownStockValues.push(forecast)
 		}
-		return array;
+		return arrayOfKnownStockValues;
 	}
 
 	forecastNextValue(data) {
@@ -101,7 +94,7 @@ export class ChartComponent implements AfterViewInit {
 			forecast -= t.data[timeseriesData.length - 1 - j][1] * coeffs[j];
 		}
 
-		return forecast;
+		return forecast<0?forecast*(-1):forecast;
 	}
 
 	drawPlot(...plots) {
@@ -126,19 +119,19 @@ export class ChartComponent implements AfterViewInit {
 		}
 
 		const layout = {
-			shapes: [
-				{
-					'type': 'line',
-					'x0': this.amountOfknownData,
-					'y0': 0,
-					'x1': this.amountOfknownData,
-					'y1': 200,
-					'line': {
-						'color': 'rgb(50, 171, 96)',
-						'width': 3,
-					},
-				},
-			]
+			// shapes: [
+			// 	{
+			// 		'type': 'line',
+			// 		'x0': this.amountOfknownData,
+			// 		'y0': 150,
+			// 		'x1': this.amountOfknownData,
+			// 		'y1': 170,
+			// 		'line': {
+			// 			'color': 'rgb(50, 171, 96)',
+			// 			'width': 3,
+			// 		},
+			// 	},
+			// ]
 		}
 		Plotly.newPlot('displayPlot', plots.map((plot) => plotItem(plot)), layout);
 	}

@@ -11,7 +11,7 @@ import { StockDataService } from '../services/stock-data.service';
 
 export class ChartComponent implements AfterViewInit {
 	public chart_url: string;
-	public amountOfData: number;
+	public amountOfTrades: number = 10;
 	public amountOfknownData: number = 14;
 	public gap: number = 1;
 	public stockData: Array<any> = [];
@@ -26,16 +26,21 @@ export class ChartComponent implements AfterViewInit {
 	}
 
 	inflate() {
-		const data = this.initData(this.amountOfData);
-		this.amountOfData = data.length;
-		const knownData = data.slice(0, this.amountOfknownData);
 
-		this.stockData = this.stockDataService.requestStocksFromGoogleFinance(this.amountOfData);
+		this.stockDataService.requestStocksFromGoogleFinance(this.amountOfTrades).then((data) => {
+			console.log(data)
+			this.stockData = data.map((el) => el.close);
 
-		console.log(this.stockData)
+
+			let stepByStepPrediction = this.countStepByStepPrediction(this.stockData, this.stockData.slice(0,14), this.gap);
+			console.log(stepByStepPrediction)
+			this.drawPlot(
+				{ name: 'Data', data: this.stockData },
+				{ name: 'Step By Step Prediction', data: stepByStepPrediction, gap: this.gap }
+			);
+		});
 
 		// let slidingRegressionForecast = this.countSlidingRegressionForecast(data);
-		// let stepByStepPrediction = this.countStepByStepPrediction(data, knownData, this.gap);
 
 		// this.drawPlot(
 		// 	{ name: 'Data', data: data },
@@ -100,8 +105,8 @@ export class ChartComponent implements AfterViewInit {
 	}
 
 	drawPlot(...plots) {
-		const initXValues = (gap = 1) => {
-			const xValues = Array.apply(null, { length: this.amountOfData }).map(Number.call, Number);
+		const initXValues = (amountOfData, gap = 1) => {
+			const xValues = Array.apply(null, { length: amountOfData }).map(Number.call, Number);
 			return xValues.map((el, index) => {
 				if (index <= this.amountOfknownData || (index - this.amountOfknownData) % gap === 0) {
 					return el;
@@ -111,7 +116,7 @@ export class ChartComponent implements AfterViewInit {
 
 		const plotItem = (plot) => {
 			return {
-				x: initXValues(plot.gap),
+				x: initXValues(plot.data.length, plot.gap),
 				y: plot.data,
 				mode: 'lines+markers',
 				name: plot.name,
@@ -125,9 +130,9 @@ export class ChartComponent implements AfterViewInit {
 				{
 					'type': 'line',
 					'x0': this.amountOfknownData,
-					'y0': -100,
+					'y0': 0,
 					'x1': this.amountOfknownData,
-					'y1': 100,
+					'y1': 200,
 					'line': {
 						'color': 'rgb(50, 171, 96)',
 						'width': 3,

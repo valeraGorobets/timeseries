@@ -20,18 +20,11 @@ export class StockDataService {
 
 
 		let response;
-		googleFinance.historical({
+		return googleFinance.historical({
 			symbol: 'NASDAQ:AAPL',
 			from: fromDate,
 			to: today
-		}, function(err, quotes) {
-			console.log(quotes)
-			response = {
-				err: err,
-				quotes: quotes
-			}
 		});
-		return response;
 	}
 
 	getDateAgo(period) {

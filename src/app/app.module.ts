@@ -5,6 +5,8 @@ import { NgModule } from '@angular/core';
 import { AppComponent } from './app.component';
 import { ChartComponent } from './chart/chart.component';
 
+import { StockDataService } from './services/stock-data.service';
+
 
 @NgModule({
   declarations: [
@@ -14,7 +16,7 @@ import { ChartComponent } from './chart/chart.component';
   imports: [
     BrowserModule
   ],
-  providers: [],
+  providers: [StockDataService],
   bootstrap: [AppComponent]
 })
 export class AppModule { }

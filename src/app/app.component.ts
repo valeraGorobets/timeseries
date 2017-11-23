@@ -1,6 +1,8 @@
 import { Component, AfterViewInit } from '@angular/core';
 import Plotly from 'plotly.js/lib/core';
 import timeseries from 'timeseries-analysis';
+import { StockDataService } from './services/stock-data.service';
+
 
 @Component({
 	selector: 'app-root',
@@ -9,16 +11,17 @@ import timeseries from 'timeseries-analysis';
 })
 export class AppComponent implements AfterViewInit {
 	public chart_url: string;
-	public amountOfData: number = 100;
+	public amountOfData: number;
 	public amountOfknownData: number = 14;
 	public gap: number = 1;
 
-	constructor() {
+	constructor(private stockDataService: StockDataService) {
 	}
 	public ngAfterViewInit(): void {
 
 
 		const data = this.initData(this.amountOfData);
+		this.amountOfData = data.length;
 		const knownData = data.slice(0, this.amountOfknownData);
 
 		let slidingRegressionForecast = this.countSlidingRegressionForecast(data);
@@ -32,9 +35,7 @@ export class AppComponent implements AfterViewInit {
 	}
 
 	initData(length) {
-		return Array.apply(null, { length: length }).map(Number.call, Number);
-		// return Array.apply(null, { length: length }).map(Number.call, Number).map(i => Math.cos(i) * i);
-		// return [2, 1, -35, 1, 23, -45, 23, 45, 2, -45, 1, 43, 12, -4, 45, 56, 23, 35, -35, 2, 15, 8, 4, 23, 7, 5, 76, 4, 34]
+		return this.stockDataService.getStockData();
 	}
 
 

@@ -9,25 +9,25 @@ import timeseries from 'timeseries-analysis';
 })
 export class AppComponent implements AfterViewInit {
 	public chart_url: string;
+	public amountOfData: number = 100;
+	public amountOfknownData: number = 14;
+	public gap: number = 1;
 
 	constructor() {
 	}
 	public ngAfterViewInit(): void {
-		const amountOfData = 30;
-		const amountOfknownData = 14;
-		const gap = 5;
 
 
-		const data = this.initData(amountOfData);
-		const knownData = data.slice(0, amountOfknownData);
+		const data = this.initData(this.amountOfData);
+		const knownData = data.slice(0, this.amountOfknownData);
 
 		let slidingRegressionForecast = this.countSlidingRegressionForecast(data);
-		let stepByStepPrediction = this.countStepByStepPrediction(data, knownData, gap);
+		let stepByStepPrediction = this.countStepByStepPrediction(data, knownData, this.gap);
 
-		this.drawPlot(data.length, amountOfknownData,
+		this.drawPlot(
 			{ name: 'Data', data: data },
-			// { name: 'Sliding Regression Forecast', data: slidingRegressionForecast },
-			{ name: 'Step By Step Prediction', data: stepByStepPrediction, gap: gap }
+			{ name: 'Sliding Regression Forecast', data: slidingRegressionForecast },
+			{ name: 'Step By Step Prediction', data: stepByStepPrediction, gap: this.gap }
 		);
 	}
 
@@ -40,7 +40,7 @@ export class AppComponent implements AfterViewInit {
 
 	countSlidingRegressionForecast(data) {
 		const t = new timeseries.main(timeseries.adapter.fromArray(data));
-		t.smoother({ period: 1 }).save('smoothed');
+		t.smoother({ period: 5 }).save('smoothed');
 		const bestSettings = t.regression_forecast_optimize();
 		t.sliding_regression_forecast({
 			sample: bestSettings.sample,
@@ -86,10 +86,17 @@ export class AppComponent implements AfterViewInit {
 		return forecast;
 	}
 
-	drawPlot(amountOfData, amountOfknownData, ...plots) {
+	drawPlot(...plots) {
+		const initXValues = (gap = 1) => {
+			const xValues = Array.apply(null, { length: this.amountOfData }).map(Number.call, Number);
+			return xValues.map((el, index) => {
+				if (index <= this.amountOfknownData || (index - this.amountOfknownData) % gap === 0) {
+					return el;
+				}
+			}).filter(el => el)
+		}
 
-
-		function plotItem(plot) {
+		const plotItem = (plot) => {
 			return {
 				x: initXValues(plot.gap),
 				y: plot.data,
@@ -100,22 +107,13 @@ export class AppComponent implements AfterViewInit {
 			}
 		}
 
-		function initXValues(gap = 1) {
-			var xValues = Array.apply(null, { length: amountOfData }).map(Number.call, Number);
-			return xValues.map((el, index) => {
-				if (index <= amountOfknownData || (index - amountOfknownData) % gap === 0) {
-					return el;
-				}
-			}).filter(el => el)
-		}
-
-		var layout = {
+		const layout = {
 			shapes: [
 				{
 					'type': 'line',
-					'x0': amountOfknownData,
+					'x0': this.amountOfknownData,
 					'y0': -100,
-					'x1': amountOfknownData,
+					'x1': this.amountOfknownData,
 					'y1': 100,
 					'line': {
 						'color': 'rgb(50, 171, 96)',
@@ -124,7 +122,6 @@ export class AppComponent implements AfterViewInit {
 				},
 			]
 		}
-		let pl = plots.map((plot) => plotItem(plot));
-		Plotly.newPlot('myDiv', pl, layout);
+		Plotly.newPlot('myDiv', plots.map((plot) => plotItem(plot)), layout);
 	}
 }

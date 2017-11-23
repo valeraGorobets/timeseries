@@ -14,25 +14,37 @@ export class ChartComponent implements AfterViewInit {
 	public amountOfData: number;
 	public amountOfknownData: number = 14;
 	public gap: number = 1;
+	public stockData: Array<any> = [];
 
 	constructor(private stockDataService: StockDataService) {
 	}
+
+
 	public ngAfterViewInit(): void {
+		setTimeout(_ => this.inflate());
 
+	}
 
+	inflate() {
 		const data = this.initData(this.amountOfData);
 		this.amountOfData = data.length;
 		const knownData = data.slice(0, this.amountOfknownData);
 
-		let slidingRegressionForecast = this.countSlidingRegressionForecast(data);
-		let stepByStepPrediction = this.countStepByStepPrediction(data, knownData, this.gap);
+		this.stockData = this.stockDataService.requestStocksFromGoogleFinance(this.amountOfData);
 
-		this.drawPlot(
-			{ name: 'Data', data: data },
-			{ name: 'Sliding Regression Forecast', data: slidingRegressionForecast },
-			{ name: 'Step By Step Prediction', data: stepByStepPrediction, gap: this.gap }
-		);
+		console.log(this.stockData)
+
+		// let slidingRegressionForecast = this.countSlidingRegressionForecast(data);
+		// let stepByStepPrediction = this.countStepByStepPrediction(data, knownData, this.gap);
+
+		// this.drawPlot(
+		// 	{ name: 'Data', data: data },
+		// 	{ name: 'Sliding Regression Forecast', data: slidingRegressionForecast },
+		// 	{ name: 'Step By Step Prediction', data: stepByStepPrediction, gap: this.gap }
+		// );
 	}
+
+
 
 	initData(length) {
 		return this.stockDataService.getStockData();

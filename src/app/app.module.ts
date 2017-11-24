@@ -6,7 +6,8 @@ import { HttpModule } from '@angular/http';
 import { AppComponent } from './app.component';
 import { ChartComponent } from './chart/chart.component';
 
-import { StockDataService } from './services/stock-data.service';
+import { StockDataService } from './services/stock-data/stock-data.service';
+import { KellyCriterionService } from './services/kelly-criterion/kelly-criterion.service';
 
 
 @NgModule({
@@ -18,7 +19,7 @@ import { StockDataService } from './services/stock-data.service';
     BrowserModule,
     HttpModule
   ],
-  providers: [StockDataService],
+  providers: [StockDataService, KellyCriterionService],
   bootstrap: [AppComponent]
 })
 export class AppModule { }

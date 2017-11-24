@@ -1,7 +1,8 @@
 import { Component, AfterViewInit } from '@angular/core';
 import Plotly from 'plotly.js/lib/core';
 import timeseries from 'timeseries-analysis';
-import { StockDataService } from '../services/stock-data.service';
+import { StockDataService } from '../services/stock-data/stock-data.service';
+import { KellyCriterionService } from '../services/kelly-criterion/kelly-criterion.service';
 
 @Component({
 	selector: 'app-chart',
@@ -15,7 +16,7 @@ export class ChartComponent implements AfterViewInit {
 	public gap: number = 1;
 	public stockData: Array<any> = [];
 
-	constructor(private stockDataService: StockDataService) {
+	constructor(private stockDataService: StockDataService, private kellyCriterionService: KellyCriterionService) {
 	}
 
 

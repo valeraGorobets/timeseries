@@ -17,7 +17,7 @@ export class AppComponent implements AfterViewInit {
 
 	constructor(private stockDataService: StockDataService, private investmentManagerService: InvestmentManagerService) {
 		this.timeLineParameters = {
-			timePeriod: 250,
+			timePeriod: 30,
 			amountOfknownData: 15,
 			gap: 1,
 		}

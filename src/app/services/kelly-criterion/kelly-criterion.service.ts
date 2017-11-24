@@ -5,7 +5,7 @@ export class KellyCriterionService {
 
 	constructor() { }
 
-	kellyBet(b, p) {
+	kellyBet(b: number, p: number) {
 		return (p * (b + 1) - 1) / b;
 	}
 

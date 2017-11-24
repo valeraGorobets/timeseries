@@ -1,57 +1,86 @@
 import { Injectable } from '@angular/core';
-import timeseries from 'timeseries-analysis';
+
+import { ForecastService } from '../forecast/forecast.service';
+import { KellyCriterionService } from '../kelly-criterion/kelly-criterion.service';
 
 @Injectable()
 export class InvestmentManagerService {
-	constructor() { }
+	private _bankroll = 100;
+	private _kellyBetStrategy = [];
+	public _arrayOfKnownStockValues = [];
+	public _arrayOfProfits = [];
 
-	countSlidingRegressionForecast(data) {
-		const t = new timeseries.main(timeseries.adapter.fromArray(data));
-		t.smoother({ period: 5 }).save('smoothed');
-		const bestSettings = t.regression_forecast_optimize();
-		t.sliding_regression_forecast({
-			sample: bestSettings.sample,
-			degree: bestSettings.degree,
-			method: bestSettings.method
-		});
-		return t.data.map(el => el[1]);
+	public report = [];
+	public stockData = [];
+	public amountOfknownData;
+
+	constructor(public forecastService: ForecastService, public kellyCriterionService: KellyCriterionService) { }
+
+	get bankroll(): number {
+		return this._bankroll;
 	}
 
-	countStepByStepPrediction(data, amountOfknownData, gap) {
-		const arrayOfStockCloseValue = data.map(el => el.close);
-		const arrayOfKnownStockValues = arrayOfStockCloseValue.slice(0, amountOfknownData);
+	get kellyBetStrategy(): Array<any> {
+		return this._kellyBetStrategy;
+	}
+
+	get arrayOfKnownStockValues(): Array<any> {
+		return this._arrayOfKnownStockValues;
+	}
+
+	get arrayOfProfits(): Array<any> {
+		return this._arrayOfProfits;
+	}
+
+	invest(stockData, amountOfknownData, gap) {
+		this.stockData = stockData.map(el => el.close);
+		this.amountOfknownData = amountOfknownData;
+		this._arrayOfKnownStockValues = this.stockData.slice(0, amountOfknownData);
+
 		let dataTillDatapoint;
 
+		for (let i = amountOfknownData; i < this.stockData.length; i++) {
 
-		for (let i = amountOfknownData; i < data.length; i++) {
 			let forecastDatapoint = i;
 			if ((i - amountOfknownData) % gap === 0) {
-				dataTillDatapoint = arrayOfStockCloseValue.slice(0, forecastDatapoint);
+				dataTillDatapoint = this.stockData.slice(0, forecastDatapoint);
 			} else {
-				dataTillDatapoint = arrayOfKnownStockValues;
+				dataTillDatapoint = this._arrayOfKnownStockValues;
 			}
-			const forecast = this.forecastNextValue(dataTillDatapoint)
-			arrayOfKnownStockValues.push(forecast)
+
+			const knownStocksPrices = this.stockData.slice(0, i);
+			const forecast = this.forecastService.forecastNextValue(dataTillDatapoint);
+			const todayStockPrice = this.stockData[i - 1];
+			const odds = forecast / todayStockPrice;
+			const probability = 0.5;
+			const kellyBet = this.kellyCriterionService.kellyBet(odds, probability);
+
+			const actualStockPrice = this.stockData[i];
+			let investAmount;
+			let profit;
+
+			this._arrayOfKnownStockValues.push(forecast);
+			this._kellyBetStrategy.push(kellyBet);
+
+			if (kellyBet > 0) {
+				investAmount = this.bankroll * kellyBet;
+				profit = investAmount - (investAmount / todayStockPrice) * actualStockPrice;
+				this._bankroll += profit;
+				this._arrayOfProfits.push(profit)
+
+			}
+
+			this.report.push({
+				i: i,
+				todayStockPrice: todayStockPrice,
+				forecast: forecast,
+				odds: odds,
+				investAmount: investAmount,
+				actualStockPrice: actualStockPrice,
+				profit: profit,
+				bankroll: this._bankroll
+			})
+
 		}
-		return arrayOfKnownStockValues;
-	}
-
-	forecastNextValue(data) {
-		const t = new timeseries.main(timeseries.adapter.fromArray(data));
-		const timeseriesData = t.data.slice(0, data.length);
-		const bestSettings = t.regression_forecast_optimize();
-
-		const coeffs = t[bestSettings.method]({
-			data: timeseriesData,
-			sample: bestSettings.sample,
-			degree: bestSettings.degree
-		});
-
-		let forecast = 0;
-		for (let j = 0; j < coeffs.length; j++) {
-			forecast -= t.data[timeseriesData.length - 1 - j][1] * coeffs[j];
-		}
-
-		return forecast < 0 ? forecast * (-1) : forecast;
 	}
 }

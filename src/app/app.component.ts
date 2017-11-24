@@ -13,11 +13,12 @@ export class AppComponent implements AfterViewInit {
 	public timeLineParameters: any = {};
 	public stockData: Array<any> = [];
 	public plots = [];
+	public report = [];
 
 	constructor(private stockDataService: StockDataService, private investmentManagerService: InvestmentManagerService) {
 		this.timeLineParameters = {
-			timePeriod: 50,
-			amountOfknownData: 14,
+			timePeriod: 250,
+			amountOfknownData: 15,
 			gap: 1,
 		}
 	}
@@ -30,12 +31,17 @@ export class AppComponent implements AfterViewInit {
 		const { timePeriod, amountOfknownData, gap } = this.timeLineParameters;
 		this.stockDataService.requestStocksFromGoogleFinance(timePeriod).then((data) => {
 			this.stockData = data;
-			const stepByStepPrediction = this.investmentManagerService.countStepByStepPrediction(this.stockData, amountOfknownData, gap);
+			
+			this.investmentManagerService.invest(this.stockData, amountOfknownData, gap);
 			
 			this.plots = [
 				{ name: 'Data', data: this.stockData.map(el => el.close) },
-				{ name: 'Step By Step Prediction', data: stepByStepPrediction, gap: gap }
+				{ name: 'Step By Step Prediction', data: this.investmentManagerService.arrayOfKnownStockValues, gap: gap }
 			];
+
+			console.log(this.investmentManagerService.bankroll)
+			console.log(this.investmentManagerService.arrayOfProfits)
+			this.report = this.investmentManagerService.report;
 		});
 	}
 }

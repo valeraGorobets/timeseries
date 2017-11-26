@@ -33,8 +33,7 @@ export class InvestmentManagerService {
 	}
 
 	invest(stockData, amountOfknownData, gap) {
-		// this.stockData = stockData.map(el => el.close);
-		this.stockData = stockData;
+		this.stockData = stockData.map(el => el.close);
 		this.amountOfknownData = amountOfknownData;
 		this._arrayOfKnownStockValues = this.stockData.slice(0, amountOfknownData);
 

@@ -17,7 +17,7 @@ export class AppComponent implements AfterViewInit {
 
 	constructor(private stockDataService: StockDataService, private investmentManagerService: InvestmentManagerService) {
 		this.timeLineParameters = {
-			timePeriod: 30,
+			timePeriod: 50,
 			amountOfknownData: 15,
 			gap: 1,
 		}
@@ -29,31 +29,18 @@ export class AppComponent implements AfterViewInit {
 
 	inflate() {
 		const { timePeriod, amountOfknownData, gap } = this.timeLineParameters;
-		// this.stockDataService.requestStocksFromGoogleFinance(timePeriod).then((data) => {
-		// 	this.stockData = data;
+		this.stockDataService.requestStocksFromGoogleFinance(timePeriod).then((data) => {
+			this.stockData = data;
+			this.investmentManagerService.invest(this.stockData, amountOfknownData, gap);
 
-		// 	this.investmentManagerService.invest(this.stockData, amountOfknownData, gap);
+			this.plots = [
+				{ name: 'Data', data: this.stockData.map(el => el.close) },
+				{ name: 'Step By Step Prediction', data: this.investmentManagerService.arrayOfKnownStockValues, gap: gap }
+			];
 
-		// 	this.plots = [
-		// 		{ name: 'Data', data: this.stockData.map(el => el.close) },
-		// 		{ name: 'Step By Step Prediction', data: this.investmentManagerService.arrayOfKnownStockValues, gap: gap }
-		// 	];
-
-		// 	console.log(this.investmentManagerService.bankroll)
-		// 	console.log(this.investmentManagerService.arrayOfProfits)
-		// 	this.report = this.investmentManagerService.report;
-		// });
-		this.stockData = this.stockDataService.getStockData();
-		this.investmentManagerService.invest(this.stockData, amountOfknownData, gap);
-
-		this.plots = [
-			{ name: 'Data', data: this.stockData.map(el => el.close) },
-			{ name: 'Step By Step Prediction', data: this.investmentManagerService.arrayOfKnownStockValues, gap: gap }
-		];
-
-		console.log(this.investmentManagerService.bankroll)
-		console.log(this.investmentManagerService.arrayOfProfits)
-		this.report = this.investmentManagerService.report;
-
+			console.log(this.investmentManagerService.bankroll)
+			console.log(this.investmentManagerService.arrayOfProfits)
+			this.report = this.investmentManagerService.report;
+		});
 	}
 }

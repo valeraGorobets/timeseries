@@ -29,19 +29,31 @@ export class AppComponent implements AfterViewInit {
 
 	inflate() {
 		const { timePeriod, amountOfknownData, gap } = this.timeLineParameters;
-		this.stockDataService.requestStocksFromGoogleFinance(timePeriod).then((data) => {
-			this.stockData = data;
-			
-			this.investmentManagerService.invest(this.stockData, amountOfknownData, gap);
-			
-			this.plots = [
-				{ name: 'Data', data: this.stockData.map(el => el.close) },
-				{ name: 'Step By Step Prediction', data: this.investmentManagerService.arrayOfKnownStockValues, gap: gap }
-			];
+		// this.stockDataService.requestStocksFromGoogleFinance(timePeriod).then((data) => {
+		// 	this.stockData = data;
 
-			console.log(this.investmentManagerService.bankroll)
-			console.log(this.investmentManagerService.arrayOfProfits)
-			this.report = this.investmentManagerService.report;
-		});
+		// 	this.investmentManagerService.invest(this.stockData, amountOfknownData, gap);
+
+		// 	this.plots = [
+		// 		{ name: 'Data', data: this.stockData.map(el => el.close) },
+		// 		{ name: 'Step By Step Prediction', data: this.investmentManagerService.arrayOfKnownStockValues, gap: gap }
+		// 	];
+
+		// 	console.log(this.investmentManagerService.bankroll)
+		// 	console.log(this.investmentManagerService.arrayOfProfits)
+		// 	this.report = this.investmentManagerService.report;
+		// });
+		this.stockData = this.stockDataService.getStockData();
+		this.investmentManagerService.invest(this.stockData, amountOfknownData, gap);
+
+		this.plots = [
+			{ name: 'Data', data: this.stockData.map(el => el.close) },
+			{ name: 'Step By Step Prediction', data: this.investmentManagerService.arrayOfKnownStockValues, gap: gap }
+		];
+
+		console.log(this.investmentManagerService.bankroll)
+		console.log(this.investmentManagerService.arrayOfProfits)
+		this.report = this.investmentManagerService.report;
+
 	}
 }

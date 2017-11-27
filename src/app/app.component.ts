@@ -3,7 +3,6 @@ import { Component, AfterViewInit } from '@angular/core';
 import { StockDataService } from './services/stock-data/stock-data.service';
 import { InvestmentManagerService } from './services/investment-manager/investment-manager.service';
 
-
 @Component({
 	selector: 'app-root',
 	templateUrl: './app.component.html',
@@ -29,18 +28,20 @@ export class AppComponent implements AfterViewInit {
 
 	inflate() {
 		const { timePeriod, amountOfknownData, gap } = this.timeLineParameters;
-		this.stockDataService.requestStocksFromGoogleFinance(timePeriod).then((data) => {
-			this.stockData = data;
+		this.stockDataService.requestStocksFromGoogleFinance(timePeriod).then(data => {
+			this.stockData = data.reduce((stocks, cur) => {
+				return [...stocks, +cur[1]];
+			}, []);
 			this.investmentManagerService.invest(this.stockData, amountOfknownData, gap);
 
 			this.plots = [
-				{ name: 'Data', data: this.stockData.map(el => el.close) },
+				{ name: 'Data', data: this.stockData },
 				{ name: 'Step By Step Prediction', data: this.investmentManagerService.arrayOfKnownStockValues, gap: gap }
 			];
 
 			console.log(this.investmentManagerService.bankroll)
 			console.log(this.investmentManagerService.arrayOfProfits)
 			this.report = this.investmentManagerService.report;
-		});
+		})
 	}
 }

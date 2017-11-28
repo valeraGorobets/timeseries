@@ -15,7 +15,7 @@ export class StockDataService {
 		// return [2, 1, -35, 1, 23, -45, 23, 45, 2, -45, 1, 43, 12, -4, 45, 56, 23, 35, -35, 2, 15, 8, 4, 23, 7, 5, 76, 4, 34]
 	}
 
-	requestStocksFromGoogleFinance(period):Promise<Array<any>>{
+	requestStocksFromGoogleFinance(period): Promise<Array<any>> {
 		const today = this.getDateAgo(0);
 		const fromDate = this.getDateAgo(period);
 		const company = 'AAPL';
@@ -30,6 +30,24 @@ export class StockDataService {
 				})
 		});
 	}
+
+	requestBitcoinPrice(period) {
+		const today = this.getDateAgo(0);
+		const fromDate = this.getDateAgo(period);
+		let stocks = [];
+		return new Promise((resolve, reject) => {
+			csv().fromStream(request.get(`https://api.coindesk.com/v1/bpi/historical/close.csv?start=${fromDate}&end=${today}`))
+				.on('csv', (row) => {
+					if (row.length == 2) {
+						stocks.push(row);
+					}
+				})
+				.on('done', () => {
+					resolve(stocks);
+				})
+		});
+	}
+
 
 	getDateAgo(period) {
 		var today = new Date()

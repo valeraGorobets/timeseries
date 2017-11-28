@@ -1,4 +1,8 @@
 <div>
+  <div class="refresh">
+    <input type="number" id="period">
+    <button (click)="refresh()">Refresh</button>
+  </div>
   <app-chart [timeLineParameters]="timeLineParameters" [plots]="plots"></app-chart>
   <table style="width:100%">
     <tr>

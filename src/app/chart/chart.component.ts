@@ -28,7 +28,7 @@ export class ChartComponent {
 	}
 
 	drawPlot(plots) {
-		if(!plots.length){
+		if(!Object.keys(plots).length){
 			return;
 		}
 
@@ -43,7 +43,7 @@ export class ChartComponent {
 
 		const plotItem = (plot) => {
 			return {
-				x: initXValues(plot.data.length, plot.gap),
+				x: plots.xValue,
 				y: plot.data,
 				mode: 'lines+markers',
 				name: plot.name,
@@ -67,6 +67,6 @@ export class ChartComponent {
 			// 	},
 			// ]
 		}
-		Plotly.newPlot('displayPlot', plots.map((plot) => plotItem(plot)), layout);
+		Plotly.newPlot('displayPlot', plots.data.map((plot) => plotItem(plot)), layout);
 	}
 }

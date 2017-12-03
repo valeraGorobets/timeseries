@@ -12,13 +12,16 @@ export class AppComponent implements AfterViewInit {
 	public timeLineParameters: any = {};
 	public stockData: Array<any> = [];
 	public plots = {};
-	public report = [];
+	public report: Array<any> = [];
+	public dates = [];
+	public loading = false;
+	public guessed = 0;
 
 	constructor(private stockDataService: StockDataService, private investmentManagerService: InvestmentManagerService) {
 		this.timeLineParameters = {
 			timePeriod: 50,
 			amountOfknownData: 15,
-			gap: 1,
+			gap: 2,
 		}
 	}
 
@@ -27,29 +30,36 @@ export class AppComponent implements AfterViewInit {
 	}
 
 	inflate() {
+		this.loading = true;
 		const { timePeriod, amountOfknownData, gap } = this.timeLineParameters;
-		this.stockDataService.requestBitcoinPrice(timePeriod).then((data: Array<any>) => {
-			const xValue = this.filterTimeLine(data);
+		this.stockDataService.requestStocksFromGoogleFinance(timePeriod).then((data: Array<any>) => {
+			this.dates = this.filterTimeLine(data);
 			this.stockData = this.filterStockData(data);
 			this.investmentManagerService.invest(this.stockData, amountOfknownData, gap);
 
 			this.plots = {
 				data: [
 					{ name: 'Data', data: this.stockData },
-					{ name: 'Step By Step Prediction', data: this.investmentManagerService.arrayOfKnownStockValues, gap: gap }
+					{ name: 'Prediction', data: this.investmentManagerService.arrayOfKnownStockValues, gap: gap }
 				],
-				xValue: xValue
+				xValue: this.dates
 			};
 
+			console.log(this.dates)
 			console.log(this.investmentManagerService.bankroll)
-			console.log(this.investmentManagerService.arrayOfProfits)
+			console.log(this.investmentManagerService.kellyBetStrategy)
 			this.report = this.investmentManagerService.report;
+
+			this.guessed = Math.floor(100*this.report.filter((el) => el.profit > 0).length / (this.report.length));
+			this.loading = false;
 		})
 	}
 
 	refresh() {
-		const period = (<HTMLInputElement>document.getElementById('period')).value;
-		this.timeLineParameters.timePeriod = period;
+		// const period = (<HTMLInputElement>document.getElementById('period')).value;
+		// const gap = (<HTMLInputElement>document.getElementById('gap')).value;
+		// this.timeLineParameters.timePeriod = period || 50;
+		// this.timeLineParameters.gap = gap || 1;
 		this.inflate();
 	}
 

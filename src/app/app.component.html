@@ -1,12 +1,20 @@
 <div>
+  <div *ngIf="loading" class="loading">
+    <p>Loading...</p>
+  </div>
   <div class="refresh">
-    <input type="number" id="period">
+    <p> Период от 30 до 200 дней иначе долго загружается; Шаг от 1 до 5;</p>
+    <input [(ngModel)]="timeLineParameters.timePeriod" type="number" id="period" placeholder="Период" >
+    <input [(ngModel)]="timeLineParameters.gap" type="number" id="gap" placeholder="Шаг инвестирования" >
     <button (click)="refresh()">Refresh</button>
+    <h2>Период {{timeLineParameters.timePeriod}} дней инвестируя раз в {{timeLineParameters.gap}} дня</h2>
   </div>
   <app-chart [timeLineParameters]="timeLineParameters" [plots]="plots"></app-chart>
-  <table style="width:100%">
+  <h1>Процент успешных сделок: {{guessed}}%</h1>
+  <table>
     <tr>
       <th>i</th>
+      <th>date</th>
       <th>todayStockPrice</th>
       <th>forecast</th>
       <th>odds</th>
@@ -15,8 +23,9 @@
       <th>profit</th>
       <th>bankroll</th>
     </tr>
-    <tr *ngFor="let item of report">
+    <tr *ngFor="let item of report" class="tableRow">
       <td align="center">{{item.i}}</td>
+      <td align="center">{{dates[item.i-1]}}</td>
       <td align="center">{{item.todayStockPrice}}</td>
       <td align="center">{{item.forecast}}</td>
       <td align="center">{{item.odds}}</td>

@@ -12,6 +12,7 @@ import Plotly from 'plotly.js/lib/core';
 export class ChartComponent {
 	public plots;
 	public amountOfknownData;
+	public gap;
 
 	constructor() {
 	}
@@ -19,6 +20,7 @@ export class ChartComponent {
 	ngOnChanges(changes: { [propertyName: string]: SimpleChanges }) {
 		if (changes['timeLineParameters'] ) {
 			this.amountOfknownData = changes.timeLineParameters.currentValue['amountOfknownData'];
+			this.gap = changes.timeLineParameters.currentValue['gap'];
 		}
 
 		if (changes['plots'] ) {
@@ -32,18 +34,21 @@ export class ChartComponent {
 			return;
 		}
 
-		const initXValues = (amountOfData, gap = 1) => {
-			const xValues = Array.apply(null, { length: amountOfData }).map(Number.call, Number);
-			return xValues.map((el, index) => {
-				if (index <= this.amountOfknownData || (index - this.amountOfknownData) % gap === 0) {
-					return el;
+		const clearGapedDates = (data, gap) => {
+			const known = data.slice(0, this.amountOfknownData);
+			let rest = data.slice(this.amountOfknownData);
+			for(let i = 0; i<rest.length; i++){
+				for(let j = 0; j< gap-1; j++){
+					rest.splice(i, 1);
 				}
-			}).filter(el => el)
+			}
+			return known.concat(rest);
 		}
 
 		const plotItem = (plot) => {
+			let x = plot.gap ? clearGapedDates(plots.xValue, plot.gap) : plots.xValue;
 			return {
-				x: plots.xValue,
+				x: x,
 				y: plot.data,
 				mode: 'lines+markers',
 				name: plot.name,

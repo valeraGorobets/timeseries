@@ -1,5 +1,26 @@
 .refresh{
-	width:250px;
+	width:500px;
 	margin:0 auto;
 	height: 50px;
+	padding-bottom: 80px;
+}
+table {
+	width: 100%;
+}
+.tableRow:hover{
+	background-color: #C8C8C8;
+}
+.loading{
+	height: 100%;
+	position: absolute;
+	width: 100%;
+ 	background:rgba(0,0,0,0.8);
+ 	text-align: center;
+ 	z-index: 100;
+}
+.loading p{
+	color: #ffff;
+	font-size: 50px;
+	margin-top: 400px;
+	position: relative;
 }

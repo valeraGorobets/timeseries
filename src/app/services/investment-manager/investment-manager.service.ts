@@ -14,6 +14,7 @@ export class InvestmentManagerService {
 	public stockData = [];
 	public amountOfknownData;
 
+
 	constructor(public forecastService: ForecastService, public kellyCriterionService: KellyCriterionService) { }
 
 	get bankroll(): number {
@@ -33,43 +34,39 @@ export class InvestmentManagerService {
 	}
 
 	invest(stockData, amountOfknownData, gap) {
+		this.report = [];
 		this.stockData = stockData;
 		this.amountOfknownData = amountOfknownData;
 		this._arrayOfKnownStockValues = this.stockData.slice(0, amountOfknownData);
 
-		let dataTillDatapoint;
 
-		for (let i = amountOfknownData; i < this.stockData.length; i++) {
 
-			let forecastDatapoint = i;
-			if ((i - amountOfknownData) % gap === 0) {
-				dataTillDatapoint = this.stockData.slice(0, forecastDatapoint);
-			} else {
-				dataTillDatapoint = this._arrayOfKnownStockValues;
-			}
+		for (let i = amountOfknownData; i < this.stockData.length; i += gap) {
+			let dataTillDatapoint = this.stockData.slice(0, i);
 
-			const knownStocksPrices = this.stockData.slice(0, i);
-			const forecast = this.forecastService.forecastNextValue(dataTillDatapoint);
+			const forecast = this.forecastService.forecastNextValue(dataTillDatapoint, gap);
+			this._arrayOfKnownStockValues.push(forecast);
+
 			const todayStockPrice = this.stockData[i - 1];
+			const actualStockPrice = this.stockData[i - 1 + gap];
 			const odds = forecast / todayStockPrice;
-			const probability = 0.5;
-			const kellyBet = this.kellyCriterionService.kellyBet(odds, probability);
+			const probability = 0.54;
 
-			const actualStockPrice = this.stockData[i];
 			let investAmount;
 			let profit;
+			if (actualStockPrice) {
+				const kellyBet = this.kellyCriterionService.kellyBet(odds, probability);
+				this._kellyBetStrategy.push(kellyBet);
 
-			this._arrayOfKnownStockValues.push(forecast);
-			this._kellyBetStrategy.push(kellyBet);
-
-			if (kellyBet > 0) {
 				investAmount = this.bankroll * kellyBet;
-				profit = investAmount - (investAmount / todayStockPrice) * actualStockPrice;
+				if (odds > 1) {
+					profit = this.openLongPosition(investAmount, todayStockPrice, actualStockPrice);
+				} else {
+					profit = this.openShortPosition(investAmount, todayStockPrice, actualStockPrice);
+				}
 				this._bankroll += profit;
-				this._arrayOfProfits.push(profit)
-
+				this._arrayOfProfits.push(profit);
 			}
-
 			this.report.push({
 				i: i,
 				todayStockPrice: todayStockPrice,
@@ -82,5 +79,15 @@ export class InvestmentManagerService {
 			})
 
 		}
+	}
+
+	openLongPosition(investAmount, todayStockPrice, actualStockPrice) {
+		const amountOfStocks = investAmount / todayStockPrice;
+		return (- todayStockPrice + actualStockPrice) * amountOfStocks;
+	}
+
+	openShortPosition(investAmount, todayStockPrice, actualStockPrice) {
+		const amountOfStocks = investAmount / todayStockPrice;
+		return (todayStockPrice - actualStockPrice) * amountOfStocks;
 	}
 }

@@ -17,26 +17,36 @@ export class ForecastService {
 		return t.data.map(el => el[1]);
 	}
 
-	countStepByStepPrediction(data, amountOfknownData, gap) {
-		const arrayOfStockCloseValue = data.map(el => el.close);
-		const arrayOfKnownStockValues = arrayOfStockCloseValue.slice(0, amountOfknownData);
-		let dataTillDatapoint;
+	// countStepByStepPrediction(data, amountOfknownData, gap) {
+	// 	const arrayOfStockCloseValue = data.map(el => el.close);
+	// 	const arrayOfKnownStockValues = arrayOfStockCloseValue.slice(0, amountOfknownData);
+	// 	let dataTillDatapoint;
 
 
-		for (let i = amountOfknownData; i < data.length; i++) {
-			let forecastDatapoint = i;
-			if ((i - amountOfknownData) % gap === 0) {
-				dataTillDatapoint = arrayOfStockCloseValue.slice(0, forecastDatapoint);
-			} else {
-				dataTillDatapoint = arrayOfKnownStockValues;
-			}
-			const forecast = this.forecastNextValue(dataTillDatapoint)
-			arrayOfKnownStockValues.push(forecast)
+	// 	for (let i = amountOfknownData; i < data.length; i++) {
+	// 		let forecastDatapoint = i;
+	// 		if ((i - amountOfknownData) % gap === 0) {
+	// 			dataTillDatapoint = arrayOfStockCloseValue.slice(0, forecastDatapoint);
+	// 		} else {
+	// 			dataTillDatapoint = arrayOfKnownStockValues;
+	// 		}
+	// 		const forecast = this.forecastNextValue(dataTillDatapoint)
+	// 		arrayOfKnownStockValues.push(forecast)
+	// 	}
+	// 	return arrayOfKnownStockValues;
+	// }
+
+	forecastNextValue(data, gap = 1) {
+		let array = data.slice();
+		let forecast;
+		for (let i = 0; i < gap; i++) {
+			forecast = this.countForecast(array);
+			array.push(forecast);
 		}
-		return arrayOfKnownStockValues;
+		return forecast;
 	}
 
-	forecastNextValue(data) {
+	countForecast(data) {
 		const t = new timeseries.main(timeseries.adapter.fromArray(data));
 		const timeseriesData = t.data.slice(0, data.length);
 		const bestSettings = t.regression_forecast_optimize();

@@ -18,7 +18,7 @@ export class StockDataService {
 	requestStocksFromGoogleFinance(period): Promise<Array<any>> {
 		const today = this.getDateAgo(0);
 		const fromDate = this.getDateAgo(period);
-		const company = 'AAPL';
+		const company = 'EPAM';
 		let stocks = [];
 		return new Promise((resolve, reject) => {
 			csv().fromStream(request.get(`https://www.quandl.com/api/v1/datasets/WIKI/${company}.csv?column=4&sort_order=asc&trim_start=${fromDate}&trim_end=${today}`))

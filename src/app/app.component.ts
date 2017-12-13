@@ -10,12 +10,14 @@ import { InvestmentManagerService } from './services/investment-manager/investme
 })
 export class AppComponent implements AfterViewInit {
 	public timeLineParameters: any = {};
-	public stockData: Array<any> = [];
+
+	public openStockData: Array<any> = [];
 	public plots = {};
 	public report: Array<any> = [];
 	public dates = [];
 	public loading = false;
 	public guessed = 0;
+	public bank = 0;
 
 	constructor(private stockDataService: StockDataService, private investmentManagerService: InvestmentManagerService) {
 		this.timeLineParameters = {
@@ -26,41 +28,74 @@ export class AppComponent implements AfterViewInit {
 	}
 
 	public ngAfterViewInit(): void {
-		setTimeout(() => this.inflate());
+		setTimeout(() => this.refresh());
 	}
 
-	inflate() {
+	public refresh() {
+		this.investLocaly();
+		// this.investGoogle();
+	}
+
+	private investLocaly() {
+		const stockData: any = {};
 		this.loading = true;
-		const { timePeriod, amountOfknownData, gap } = this.timeLineParameters;
-		this.stockDataService.requestStocksFromGoogleFinance(timePeriod).then((data: Array<any>) => {
-			this.dates = this.filterTimeLine(data);
-			this.stockData = this.filterStockData(data);
-			this.investmentManagerService.invest(this.stockData, amountOfknownData, gap);
-
-			this.plots = {
-				data: [
-					{ name: 'Data', data: this.stockData },
-					{ name: 'Prediction', data: this.investmentManagerService.arrayOfKnownStockValues, gap: gap }
-				],
-				xValue: this.dates
-			};
-
-			console.log(this.dates)
-			console.log(this.investmentManagerService.bankroll)
-			console.log(this.investmentManagerService.kellyBetStrategy)
-			this.report = this.investmentManagerService.report;
-
-			this.guessed = Math.floor(100*this.report.filter((el) => el.profit > 0).length / (this.report.length));
+		this.stockDataService.requestStocksFromLocal(this.timeLineParameters.timePeriod).then((data: Array<any>) => {
+			this.dates = this.filterTimeLine_l(data);
+			stockData.closeStockData = this.filterClosePrice_l(data);
+			stockData.openStockData = this.filterOpenPrice_l(data);
+			this.invest(stockData);
 			this.loading = false;
-		})
+		});
 	}
 
-	refresh() {
-		// const period = (<HTMLInputElement>document.getElementById('period')).value;
-		// const gap = (<HTMLInputElement>document.getElementById('gap')).value;
-		// this.timeLineParameters.timePeriod = period || 50;
-		// this.timeLineParameters.gap = gap || 1;
-		this.inflate();
+	private investGoogle() {
+		const stockData: any = {};
+		this.loading = true;
+		this.stockDataService.requestStocksFromGoogleFinance(this.timeLineParameters.timePeriod).then((data: Array<any>) => {
+			this.dates = this.filterTimeLine(data);
+			stockData.closeStockData = this.filterStockData(data);
+			stockData.openStockData = this.filterStockData(data);
+			this.invest(stockData);
+			this.loading = false;
+		});
+	}
+
+	private invest(stockData) {
+		const { timePeriod, amountOfknownData, gap } = this.timeLineParameters;
+
+		this.investmentManagerService.invest(stockData, amountOfknownData, gap);
+
+		this.plots = {
+			data: [
+				{ name: 'Data', data: stockData.closeStockData },
+				{ name: 'Prediction', data: this.investmentManagerService.arrayOfKnownStockValues, gap: gap }
+			],
+			xValue: this.dates
+		};
+
+		this.report = this.investmentManagerService.report;
+		this.guessed = Math.floor(100 * this.report.filter((el) => el.profit > 0).length / (this.report.filter((el) => el.profit).length));
+		this.bank = this.investmentManagerService.bankroll;
+	}
+
+	filterTimeLine_l(data: Array<any>) {
+		return data.map(el => el.Date);
+	}
+
+
+	filterOpenPrice_l(data: Array<any>) {
+		return data.map(el => el.Open);
+	}
+
+
+	filterClosePrice_l(data: Array<any>) {
+		return data.map(el => el.Close);
+	}
+
+	filterTimeLine(data: Array<any>) {
+		return data.reduce((stocks, cur) => {
+			return [...stocks, cur[0]];
+		}, []);
 	}
 
 	filterStockData(data: Array<any>) {
@@ -69,10 +104,5 @@ export class AppComponent implements AfterViewInit {
 		}, []);
 	}
 
-	filterTimeLine(data: Array<any>) {
-		return data.reduce((stocks, cur) => {
-			return [...stocks, cur[0]];
-		}, []);
-	}
 
 }

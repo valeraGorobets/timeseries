@@ -12,12 +12,14 @@ import { StockDataService } from './services/stock-data/stock-data.service';
 import { KellyCriterionService } from './services/kelly-criterion/kelly-criterion.service';
 import { InvestmentManagerService } from './services/investment-manager/investment-manager.service';
 import { ForecastService } from './services/forecast/forecast.service';
+import { RoundPipe } from './pipes/round/round.pipe';
 
 
 @NgModule({
   declarations: [
     AppComponent,
-    ChartComponent
+    ChartComponent,
+    RoundPipe
   ],
   imports: [
     BrowserModule,

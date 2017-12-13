@@ -9,11 +9,8 @@ export class InvestmentManagerService {
 	private _kellyBetStrategy = [];
 	public _arrayOfKnownStockValues = [];
 	public _arrayOfProfits = [];
-
 	public report = [];
-	public stockData = [];
-	public amountOfknownData;
-
+	public amountOfknownData = [];
 
 	constructor(public forecastService: ForecastService, public kellyCriterionService: KellyCriterionService) { }
 
@@ -34,46 +31,48 @@ export class InvestmentManagerService {
 	}
 
 	invest(stockData, amountOfknownData, gap) {
-		this.report = [];
-		this.stockData = stockData;
+		this.initDefault();
+		const { closeStockData, openStockData } = stockData;
 		this.amountOfknownData = amountOfknownData;
-		this._arrayOfKnownStockValues = this.stockData.slice(0, amountOfknownData);
+		this._arrayOfKnownStockValues = closeStockData.slice(0, amountOfknownData);
 
-
-
-		for (let i = amountOfknownData; i < this.stockData.length; i += gap) {
-			let dataTillDatapoint = this.stockData.slice(0, i);
+		for (let i = amountOfknownData; i < closeStockData.length; i += gap) {
+			let dataTillDatapoint = closeStockData.slice(0, i);
 
 			const forecast = this.forecastService.forecastNextValue(dataTillDatapoint, gap);
 			this._arrayOfKnownStockValues.push(forecast);
 
-			const todayStockPrice = this.stockData[i - 1];
-			const actualStockPrice = this.stockData[i - 1 + gap];
-			const odds = forecast / todayStockPrice;
-			const probability = 0.54;
+			const todayClosePrice = closeStockData[i - 1];
+			const nextDayOpenPrice = openStockData[i - 1 + gap];
+			const nextDayClosePrice = closeStockData[i - 1 + gap];
+			const odds = forecast / todayClosePrice;
+			const probability = 0.6;
 
+			//place buy limit order
+			const limitOrderPassed = (nextDayOpenPrice - todayClosePrice) <= 0;
 			let investAmount;
 			let profit;
-			if (actualStockPrice) {
+			if (nextDayClosePrice && limitOrderPassed) {
 				const kellyBet = this.kellyCriterionService.kellyBet(odds, probability);
 				this._kellyBetStrategy.push(kellyBet);
 
 				investAmount = this.bankroll * kellyBet;
 				if (odds > 1) {
-					profit = this.openLongPosition(investAmount, todayStockPrice, actualStockPrice);
+					profit = this.openLongPosition(investAmount, todayClosePrice, nextDayClosePrice);
 				} else {
-					profit = this.openShortPosition(investAmount, todayStockPrice, actualStockPrice);
+					profit = this.openShortPosition(investAmount, todayClosePrice, nextDayClosePrice);
 				}
 				this._bankroll += profit;
 				this._arrayOfProfits.push(profit);
 			}
+			
 			this.report.push({
 				i: i,
-				todayStockPrice: todayStockPrice,
+				todayClosePrice: todayClosePrice,
 				forecast: forecast,
 				odds: odds,
 				investAmount: investAmount,
-				actualStockPrice: actualStockPrice,
+				nextDayClosePrice: nextDayClosePrice,
 				profit: profit,
 				bankroll: this._bankroll
 			})
@@ -81,13 +80,22 @@ export class InvestmentManagerService {
 		}
 	}
 
-	openLongPosition(investAmount, todayStockPrice, actualStockPrice) {
-		const amountOfStocks = investAmount / todayStockPrice;
-		return (- todayStockPrice + actualStockPrice) * amountOfStocks;
+	initDefault() {
+		this._bankroll = 100;
+		this._kellyBetStrategy = [];
+		this._arrayOfKnownStockValues = [];
+		this._arrayOfProfits = [];
+		this.report = [];
+		this.amountOfknownData = [];
 	}
 
-	openShortPosition(investAmount, todayStockPrice, actualStockPrice) {
-		const amountOfStocks = investAmount / todayStockPrice;
-		return (todayStockPrice - actualStockPrice) * amountOfStocks;
+	openLongPosition(investAmount, todayClosePrice, nextDayClosePrice) {
+		const amountOfStocks = investAmount / todayClosePrice;
+		return (- todayClosePrice + nextDayClosePrice) * amountOfStocks;
+	}
+
+	openShortPosition(investAmount, todayClosePrice, nextDayClosePrice) {
+		const amountOfStocks = investAmount / todayClosePrice;
+		return (todayClosePrice - nextDayClosePrice) * amountOfStocks;
 	}
 }

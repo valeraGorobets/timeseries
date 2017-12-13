@@ -69,10 +69,12 @@ export class InvestmentManagerService {
 			this.report.push({
 				i: i,
 				todayClosePrice: todayClosePrice,
+				limitOrderPassed: limitOrderPassed,
 				forecast: forecast,
 				odds: odds,
 				investAmount: investAmount,
 				nextDayClosePrice: nextDayClosePrice,
+				nextDayOpenPrice: nextDayOpenPrice,
 				profit: profit,
 				bankroll: this._bankroll
 			})

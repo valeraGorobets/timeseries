@@ -16,6 +16,8 @@
       <th>i</th>
       <th>date</th>
       <th>todayClosePrice</th>
+      <th>nextDayOpenPrice</th>
+      <th>limitOrderPassed</th>
       <th>forecast</th>
       <th>odds</th>
       <th>investAmount</th>
@@ -27,6 +29,8 @@
       <td align="center">{{item.i}}</td>
       <td align="center">{{dates[item.i-1]}}</td>
       <td align="center">{{item.todayClosePrice | round:2}}</td>
+      <td align="center">{{item.nextDayOpenPrice | round:2}}</td>
+      <td align="center">{{item.limitOrderPassed}}</td>
       <td align="center">{{item.forecast | round:2}}</td>
       <td align="center">{{item.odds | round:5}}</td>
       <td align="center">{{item.investAmount | round:2}}</td>

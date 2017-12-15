@@ -23,7 +23,7 @@ export class AppComponent implements AfterViewInit {
 		this.timeLineParameters = {
 			timePeriod: 50,
 			amountOfknownData: 15,
-			gap: 2,
+			gap: 1,
 		}
 	}
 
@@ -65,15 +65,24 @@ export class AppComponent implements AfterViewInit {
 
 		this.investmentManagerService.invest(stockData, amountOfknownData, gap);
 
+		this.report = this.investmentManagerService.report;
+		let indexesFromReport = this.report.map(el=>el.i);
+		let datesArray = [];
+		indexesFromReport.forEach(index=>{
+			datesArray.push(this.dates[index-1]);
+		})
+
+		let forecastValues = this.report.map(el=>el.forecast);
+		forecastValues.unshift(this.report[0].todayClosePrice)
+		
+
 		this.plots = {
 			data: [
-				{ name: 'Data', data: stockData.closeStockData },
-				{ name: 'Prediction', data: this.investmentManagerService.arrayOfKnownStockValues, gap: gap }
+				{ name: 'Цена закрытия', data: this.report.map(el => el.todayClosePrice) },
+				{ name: 'Прогноз', data: forecastValues }
 			],
-			xValue: this.dates
+			xValue: datesArray
 		};
-
-		this.report = this.investmentManagerService.report;
 		this.guessed = Math.floor(100 * this.report.filter((el) => el.profit > 0).length / (this.report.filter((el) => el.profit).length));
 		this.bank = this.investmentManagerService.bankroll;
 	}

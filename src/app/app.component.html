@@ -7,7 +7,7 @@
     <input [(ngModel)]="timeLineParameters.timePeriod" type="number" id="period" placeholder="Период">
     <input [(ngModel)]="timeLineParameters.gap" type="number" id="gap" placeholder="Шаг инвестирования">
     <button (click)="refresh()">Refresh</button>
-    <h2>Период {{timeLineParameters.timePeriod}} дней инвестируя раз в {{timeLineParameters.gap}} дня</h2>
+    <h2>Период {{timeLineParameters.timePeriod}} дней инвестируя раз в {{timeLineParameters.gap}} день</h2>
   </div>
   <app-chart [timeLineParameters]="timeLineParameters" [plots]="plots"></app-chart>
   <h1>Процент успешных сделок: {{guessed}}%, Банк: {{bank | round:2}}</h1>
@@ -16,10 +16,11 @@
       <th>i</th>
       <th>date</th>
       <th>todayClosePrice</th>
-      <th>nextDayOpenPrice</th>
+      <th>tomorowOpenPrice</th>
       <th>limitOrderPassed</th>
       <th>forecast</th>
       <th>odds</th>
+      <th>kellyBet</th>
       <th>investAmount</th>
       <th>nextDayClosePrice</th>
       <th>profit</th>
@@ -29,10 +30,11 @@
       <td align="center">{{item.i}}</td>
       <td align="center">{{dates[item.i-1]}}</td>
       <td align="center">{{item.todayClosePrice | round:2}}</td>
-      <td align="center">{{item.nextDayOpenPrice | round:2}}</td>
+      <td align="center">{{item.tomorowOpenPrice | round:2}}</td>
       <td align="center">{{item.limitOrderPassed}}</td>
       <td align="center">{{item.forecast | round:2}}</td>
       <td align="center">{{item.odds | round:5}}</td>
+      <td align="center">{{item.kellyBet | round:5}}</td>
       <td align="center">{{item.investAmount | round:2}}</td>
       <td align="center">{{item.nextDayClosePrice | round:2}}</td>
       <td align="center">{{item.profit | round:2}}</td>
